@@ -26,7 +26,7 @@ const optimization = () => {
     return config;
 }
 
-const filename = ext => isDev ? `[name].${ext}` : `[name].[hash].${ext}`;
+const filename = ext => isDev ? `[name].${ext}` : `[name].[contenthash].${ext}`;
 
 const cssLoader = extra => {
     const loaders = [
@@ -64,9 +64,15 @@ module.exports = {
     optimization: optimization(),
     devServer: {
         port: 9000,
-        hot: isDev
+        https: !isDev,
+        hot: isDev,
+        onListening: server => {
+            const port = server.listeningApp.address().port;
+            console.log('Listening on port:', port);
+        },
+        open: true
     },
-    devtool: isDev ? 'inline-source-map': 'eval',
+    devtool: isDev ? 'source-map': 'eval',
     plugins: [
         new htmlWebpackPlugin({
             template: '../index.html',
