@@ -40,7 +40,7 @@ Chose selector to append canvas element.
 **default** - 3.  
 
 # Demo View
-[(https://i.ibb.co/GvTg3F1/ezgif-6-97872d91ccbb.gif)]
+[![Demo view](https://i.ibb.co/GvTg3F1/ezgif-6-97872d91ccbb.gif)]
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
