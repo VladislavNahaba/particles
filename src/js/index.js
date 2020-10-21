@@ -2,10 +2,11 @@ import "../style/style.css";
 
 // create mouse handler
 class MouseHandler {
-    constructor(cnvWidth, cnvHeight) {
-        this.x = null;
-        this.y = null;
-        this.radius = (cnvWidth / 80) * (cnvHeight / 80);
+    constructor(cnvWidth, cnvHeight, multiplier) {
+        this.x = undefined;
+        this.y = undefined;
+        const koef = multiplier * 16;
+        this.radius = (cnvWidth / koef) * (cnvHeight / koef);
         this.#mousemoveHandler();
     }
 
@@ -77,16 +78,20 @@ class Particle {
         let distance = Math.sqrt(dx ** 2 + dy ** 2);
         if (distance < mouse.getRadius() + this.size) {
             if (mouse.getX() < this.x && this.x < cnvWidth - this.size * 10) {
-                this.x += 10;
+                this.x += 5;
+                this.directionX = -this.directionX
             }
             if (mouse.getX() > this.x && this.x > this.size * 10) {
-                this.x -= 10;
+                this.x -= 5;
+                this.directionX = -this.directionX
             }
             if (mouse.getY() < this.y && this.y < cnvHeight - this.size * 10) {
-                this.y += 10;
+                this.y += 5;
+                this.directionY = -this.directionY;
             }
             if (mouse.getY() > this.y && this.y > this.size * 10) {
-                this.y -= 10;
+                this.y -= 5;
+                this.directionY = -this.directionY;
             }
         }
         // move particle
@@ -116,23 +121,49 @@ class ParticlesLayout {
     (
         selector = 'body',
         layout = {
-            color: 'radial-gradient(#ffc38c, #ff9b40)'
+            color: 'radial-gradient(#ffc38c, #ff9b40)',
+            mouseRadiusMultiplier: 5
         },
-        mouseRadiusMultiplier = 5,
         particles = {
             color: '#8c5523',
             speed: 3,
             numberMultiplier: 1,
             size: 5,
-            connectColor: '140, 85, 31',
-            connectOpacityMultiplier: 1
+            connectColor: {
+                r: 140,
+                g: 85,
+                b: 31
+            },
+            connectOpacityMultiplier: 3
         }
     ) {
+        this.selector = selector ? selector : 'body';
+
+        this.layoutSettings = {
+            color: 'radial-gradient(#ffc38c, #ff9b40)',
+            mouseRadiusMultiplier: 5,
+            ...layout
+        };
+
+        this.particlesSettings = {
+            color: '#8c5523',
+            speed: 3,
+            numberMultiplier: 1,
+            size: 5,
+            connectColor: {
+                r: 140,
+                g: 85,
+                b: 31
+            },
+            connectOpacityMultiplier: 3,
+            ...particles
+        };
+
         this.particlesArray = [];
         this.cnv = document.querySelector('#canvas');
         this.cnv.width = window.innerWidth;
         this.cnv.height = window.innerHeight;
-        this.mouse = new MouseHandler(this.cnv.width, this.cnv.height);
+        this.mouse = new MouseHandler(this.cnv.width, this.cnv.height, this.layoutSettings.mouseRadiusMultiplier);
         this.drawer = new Drawer(this.cnv);
 
         // initialize canvas
@@ -166,14 +197,14 @@ class ParticlesLayout {
 
     // set array of particles
     createParticles() {
-        let numberOfParticles = (this.cnv.height * this.cnv.width) / 9000;
-        for (let i = 0; i < numberOfParticles; i++) {
+        let numberOfParticles = (this.cnv.height * this.cnv.width) / 10000;
+        for (let i = 0; i < numberOfParticles * this.particlesSettings.numberMultiplier; i++) {
+            let size = (Math.random() * this.particlesSettings.size) + 1;
             let x = ( Math.random() * ((window.innerWidth - size * 2) - (size * 2)) + size * 2 );
             let y = ( Math.random() * ((window.innerHeight - size * 2) - (size * 2)) + size * 2 );
-            let directionX = (Math.random() * 3) - 1.5;
-            let directionY = (Math.random() * 3) - 1.5;
-            let size = Math.trunc((Math.random() * 5)) + 1;
-            let color = '#8c5523';
+            let directionX = ((Math.random() * this.particlesSettings.speed) - this.particlesSettings.speed / 3) * (1 / (size / 2));
+            let directionY = ((Math.random() * this.particlesSettings.speed) - this.particlesSettings.speed / 3) * (1 / (size / 2));
+            let color = this.particlesSettings.color;
 
             this.particlesArray.push(Particle.create(x, y, directionX, directionY, size, color, this.mouse));
         }
@@ -206,8 +237,8 @@ class ParticlesLayout {
                 if (distance < (this.cnv.width / 20) * (this.cnv.height / 20)) {
                     this.drawer.draw(ctx => {
                         // make particles innvisible if the distance are too big
-                        let opacityValue = 1 - (distance / 1500);
-                        ctx.strokeStyle = `rgba(140, 85, 31, ${opacityValue})`;
+                        let opacityValue = 1 - (distance / (this.particlesSettings.connectOpacityMultiplier * 500));
+                        ctx.strokeStyle = `rgba(${this.particlesSettings.connectColor.r}, ${this.particlesSettings.connectColor.g}, ${this.particlesSettings.connectColor.b}, ${opacityValue})`;
                         ctx.lineWidth = 1;
                         ctx.beginPath();
                         ctx.moveTo(this.particlesArray[a].x, this.particlesArray[a].y);
