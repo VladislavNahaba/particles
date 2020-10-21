@@ -5,7 +5,7 @@ class MouseHandler {
     constructor(cnvWidth, cnvHeight, multiplier) {
         this.x = undefined;
         this.y = undefined;
-        const koef = multiplier * 16;
+        const koef = (1 + (1 / multiplier)) * 40;
         this.radius = (cnvWidth / koef) * (cnvHeight / koef);
         this.#mousemoveHandler();
     }
@@ -33,8 +33,9 @@ class MouseHandler {
         this.y = val;
     }
 
-    updateRadius(cnvWidth, cnvHeight) {
-        this.radius = (cnvWidth / 80) * (cnvHeight / 80);
+    updateRadius(cnvWidth, cnvHeight, multiplier) {
+        const koef = (1 + (1 / multiplier)) * 40;
+        this.radius = (cnvWidth / koef) * (cnvHeight / koef);
     }
 
     getRadius() {
@@ -122,7 +123,7 @@ class ParticlesLayout {
         selector = 'body',
         layout = {
             color: 'radial-gradient(#ffc38c, #ff9b40)',
-            mouseRadiusMultiplier: 5
+            mouseRadiusMultiplier: 1
         },
         particles = {
             color: '#8c5523',
@@ -143,7 +144,7 @@ class ParticlesLayout {
 
         this.layoutSettings = {
             color: 'radial-gradient(#ffc38c, #ff9b40)',
-            mouseRadiusMultiplier: 5,
+            mouseRadiusMultiplier: 1,
             ...layout
         };
 
@@ -207,7 +208,7 @@ class ParticlesLayout {
         window.addEventListener('resize', () => {
             this.cnv.width = window.innerWidth;
             this.cnv.height = window.innerHeight;
-            this.mouse.updateRadius(this.cnv.width, this.cnv.height);
+            this.mouse.updateRadius(this.cnv.width, this.cnv.height, this.layoutSettings.mouseRadiusMultiplier);
         })
     }
 
@@ -287,4 +288,9 @@ class ParticlesLayout {
         this.#animate();
     }
 }
-const layout = new ParticlesLayout();
+const layout = new ParticlesLayout('body', {
+    mouseRadiusMultiplier: 1
+}, {
+    speed: 5,
+    connectOpacityMultiplier: 5
+});
