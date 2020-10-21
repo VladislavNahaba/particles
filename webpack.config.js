@@ -1,7 +1,7 @@
 const path  = require('path');
 const htmlWebpackPlugin = require('html-webpack-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
-const copyWebpackPlugin = require('copy-webpack-plugin');
+// const copyWebpackPlugin = require('copy-webpack-plugin');
 const miniCssExtractPlugin = require('mini-css-extract-plugin');
 const CSSMinimizerWebpackPlugin = require('css-minimizer-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
@@ -83,14 +83,14 @@ module.exports = {
         new CleanWebpackPlugin(),
         // new copyWebpackPlugin({
         //     patterns: [
-        //         // {
-        //         //     from: path.resolve(__dirname, 'src', 'assets', 'images'),
-        //         //     to: path.resolve(__dirname, 'dist', 'assets', 'images')
-        //         // },
-        //         // {
-        //         //     from: path.resolve(__dirname, 'src', 'assets', 'music'),
-        //         //     to: path.resolve(__dirname, 'dist', 'assets', 'music')
-        //         // }
+        //         {
+        //             from: path.resolve(__dirname, 'src', 'assets', 'images'),
+        //             to: path.resolve(__dirname, 'dist', 'assets', 'images')
+        //         },
+        //         {
+        //             from: path.resolve(__dirname, 'src', 'assets', 'music'),
+        //             to: path.resolve(__dirname, 'dist', 'assets', 'music')
+        //         }
         //     ],
         // }),
         new miniCssExtractPlugin({
@@ -121,7 +121,11 @@ module.exports = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['@babel/preset-env']
+                        presets: ['@babel/preset-env'],
+                        plugins: [
+                            "@babel/plugin-proposal-class-properties",
+                            "@babel/plugin-proposal-private-methods"
+                        ]
                     }
                 },
             }
