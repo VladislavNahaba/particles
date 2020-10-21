@@ -1,35 +1,11 @@
 import "../style/style.css";
 
-// document.addEventListener("load", () => {
-// });
-
-
-const cnv = document.querySelector('#canvas');
-const ctx = cnv.getContext('2d');
-cnv.width = window.innerWidth;
-cnv.height = window.innerHeight;
-
-let particlesArray;
-
-// get mouse position
-let mouse = {
-    x: null,
-    y: null,
-    radius: (canvas.width / 80) * (canvas.height / 80)
-};
-
-window.addEventListener('mousemove', e => {
-    mouse.x = e.x;
-    mouse.y = e.y;
-});
-
-
 // create mouse handler
 class MouseHandler {
-    constructor(radius) {
+    constructor(cnvWidth, cnvHeight) {
         this.x = null;
         this.y = null;
-        this.radius = radius;
+        this.radius = (cnvWidth / 80) * (cnvHeight / 80);
         this.#mousemoveHandler();
     }
 
@@ -40,15 +16,27 @@ class MouseHandler {
         });
     }
 
-    get x() {
+    getX() {
         return this.x;
     }
 
-    get y() {
+    setX(val) {
+        this.x = val;
+    }
+
+    getY() {
         return this.y;
     }
 
-    get radius() {
+    setY(val) {
+        this.y = val;
+    }
+
+    updateCnv(cnvWidth, cnvHeight) {
+        this.radius = (cnvWidth / 80) * (cnvHeight / 80);
+    }
+
+    getRadius() {
         return this.radius;
     }
 }
@@ -66,44 +54,44 @@ class Particle {
 
     // draw individual particle
     draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-        ctx.fillStyle = '#8C5523';
-        ctx.fill();
+        return ctx => {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+        }
     }
 
-    // check particle position, check mouse position, move the particle, draw the particle
-    update() {
+    // check particle position, check mouse position, move the particle
+    update(cnvWidth,  cnvHeight, mouse) {
         // check if particle is still within canvas
-        if (this.x > canvas.width || this.x < 0) {
+        if (this.x > canvas.width || this.x <= 0) {
             this.directionX = -this.directionX;
         }
-        if (this.y > canvas.height || this.y < 0) {
+        if (this.y > canvas.height || this.y <= 0) {
             this.directionY = -this.directionY;
         }
         // check collision - mouse, particle
-        let dx = this.x - mouse.x;
-        let dy = this.y - mouse.y;
+        let dx = this.x - mouse.getX();
+        let dy = this.y - mouse.getY();
         let distance = Math.sqrt(dx ** 2 + dy ** 2);
-        if (distance < mouse.radius + this.size) {
-            if (mouse.x < this.x && this.x < canvas.width - this.size * 10) {
+        if (distance < mouse.getRadius() + this.size) {
+            if (mouse.getX() < this.x && this.x < cnvWidth - this.size * 10) {
                 this.x += 10;
             }
-            if (mouse.x > this.x && this.x > this.size * 10) {
+            if (mouse.getX() > this.x && this.x > this.size * 10) {
                 this.x -= 10;
             }
-            if (mouse.y < this.y && this.y < canvas.height - this.size * 10) {
+            if (mouse.getY() < this.y && this.y < cnvHeight - this.size * 10) {
                 this.y += 10;
             }
-            if (mouse.y > this.y && this.y > this.size * 10) {
+            if (mouse.getY() > this.y && this.y > this.size * 10) {
                 this.y -= 10;
             }
         }
         // move particle
         this.x += this.directionX;
         this.y += this.directionY;
-        // draw particle
-        this.draw();
     }
 
     // factory
@@ -112,36 +100,115 @@ class Particle {
     }
 }
 
-function init() {
-    particlesArray = [];
-    let numberOfParticles = (canvas.height * canvas.width) / 9000;
-    for (let i = 0; i < numberOfParticles; i++) {
-        let size = Math.trunc((Math.random() * 5)) + 1;
-        let x = ( Math.random() * ((window.innerWidth - size * 2) - (size * 2)) + size * 2 );
-        let y = ( Math.random() * ((window.innerHeight - size * 2) - (size * 2)) + size * 2 );
-        let directionX = (Math.random() * 5) - 2.5;
-        let directionY = (Math.random() * 5) - 2.5;
-        let color = '#8C5523';
+class Drawer {
+    constructor(cnv) {
+        if (!cnv) throw new Error('Canvas is not defined');
+        this.ctx = cnv.getContext('2d');
+    }
 
-        particlesArray.push(Particle.create(x, y, directionX, directionY, size, color));
+    draw(func) {
+        func(this.ctx);
     }
 }
 
-function animate() {
-    requestAnimationFrame(animate);
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+class ParticlesLayout {
+    constructor() {
+        this.particlesArray = [];
+        this.cnv = document.querySelector('#canvas');
+        this.cnv.width = window.innerWidth;
+        this.cnv.height = window.innerHeight;
+        this.mouse = new MouseHandler(this.cnv.width, this.cnv.height);
+        this.drawer = new Drawer(this.cnv);
 
-    for (let i = 0; i < particlesArray.length; i++) {
-        particlesArray[i].update();
+        // initialize canvas
+        this.init();
+
+        // set listeners after init
+        this.#innerWork();
+    }
+
+    #innerWork() {
+        this.#resizeCanvas();
+        this.#mouseOut();
+    }
+
+    // resize event
+    #resizeCanvas() {
+        window.addEventListener('resize', () => {
+            this.cnv.width = window.innerWidth;
+            this.cnv.height = window.innerHeight;
+            this.mouse.updateCnv(this.cnv.width, this.cnv.height);
+            // this.init();
+        })
+    }
+
+    // mouse out event
+    #mouseOut() {
+        window.addEventListener('mouseout', () => {
+            this.mouse.setX(undefined);
+            this.mouse.setY(undefined);
+            // this.init();
+        })
+    }
+
+    // set array of particles
+    createParticles() {
+        let numberOfParticles = (this.cnv.height * this.cnv.width) / 9000;
+        for (let i = 0; i < numberOfParticles * 2; i++) {
+            let x = ( Math.random() * ((window.innerWidth - size * 2) - (size * 2)) + size * 2 );
+            let y = ( Math.random() * ((window.innerHeight - size * 2) - (size * 2)) + size * 2 );
+            let directionX = (Math.random() * 3) - 1.5;
+            let directionY = (Math.random() * 3) - 1.5;
+            let size = Math.trunc((Math.random() * 5)) + 1;
+            let color = '#8c5523';
+
+            this.particlesArray.push(Particle.create(x, y, directionX, directionY, size, color, this.mouse));
+        }
+    }
+
+    animate() {
+        // animate every particle
+        requestAnimationFrame(this.animate.bind(this));
+        this.drawer.draw(ctx => ctx.clearRect(0, 0, window.innerWidth, window.innerHeight));
+
+        // redraw
+        for (let i = 0; i < this.particlesArray.length; i++) {
+            this.particlesArray[i].update(this.cnv.width, this.cnv.height, this.mouse);
+            this.drawer.draw(this.particlesArray[i].draw());
+        }
+
+        this.connect();
+    }
+
+    // check if particles are close enough to draw line between them
+    connect() {
+        for (let a = 0; a < this.particlesArray.length; a++) {
+            for (let b = a ; b < this.particlesArray.length; b++) {
+                let distance = (( this.particlesArray[a].x - this.particlesArray[b].x ) * 
+                    (this.particlesArray[a].x - this.particlesArray[b].x))
+                    +
+                    (( this.particlesArray[a].y - this.particlesArray[b].y ) * 
+                    (this.particlesArray[a].y - this.particlesArray[b].y));
+
+                if (distance < (this.cnv.width / 20) * (this.cnv.height / 20)) {
+                    this.drawer.draw(ctx => {
+                        // make particles innvisible if the distance are too big
+                        let opacityValue = 1 - (distance / 10000);
+                        ctx.strokeStyle = `rgba(140, 85, 31, ${opacityValue})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(this.particlesArray[a].x, this.particlesArray[a].y);
+                        ctx.lineTo(this.particlesArray[b].x, this.particlesArray[b].y);
+                        ctx.stroke();
+                    })
+                }
+            }
+        }
+    }
+
+    init() {
+        this.createParticles();
+        this.animate();
     }
 }
-
-init();
-animate();
-
-// class ParticlesLayout {
-//     constructor() {
-//         this.particlesArray = [];
-
-//     }
-// }
+const layout = new ParticlesLayout();
