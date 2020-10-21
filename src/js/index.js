@@ -112,7 +112,22 @@ class Drawer {
 }
 
 class ParticlesLayout {
-    constructor() {
+    constructor
+    (
+        selector = 'body',
+        layout = {
+            color: 'radial-gradient(#ffc38c, #ff9b40)'
+        },
+        mouseRadiusMultiplier = 5,
+        particles = {
+            color: '#8c5523',
+            speed: 3,
+            numberMultiplier: 1,
+            size: 5,
+            connectColor: '140, 85, 31',
+            connectOpacityMultiplier: 1
+        }
+    ) {
         this.particlesArray = [];
         this.cnv = document.querySelector('#canvas');
         this.cnv.width = window.innerWidth;
@@ -138,7 +153,6 @@ class ParticlesLayout {
             this.cnv.width = window.innerWidth;
             this.cnv.height = window.innerHeight;
             this.mouse.updateCnv(this.cnv.width, this.cnv.height);
-            // this.init();
         })
     }
 
@@ -147,14 +161,13 @@ class ParticlesLayout {
         window.addEventListener('mouseout', () => {
             this.mouse.setX(undefined);
             this.mouse.setY(undefined);
-            // this.init();
         })
     }
 
     // set array of particles
     createParticles() {
         let numberOfParticles = (this.cnv.height * this.cnv.width) / 9000;
-        for (let i = 0; i < numberOfParticles * 2; i++) {
+        for (let i = 0; i < numberOfParticles; i++) {
             let x = ( Math.random() * ((window.innerWidth - size * 2) - (size * 2)) + size * 2 );
             let y = ( Math.random() * ((window.innerHeight - size * 2) - (size * 2)) + size * 2 );
             let directionX = (Math.random() * 3) - 1.5;
@@ -193,7 +206,7 @@ class ParticlesLayout {
                 if (distance < (this.cnv.width / 20) * (this.cnv.height / 20)) {
                     this.drawer.draw(ctx => {
                         // make particles innvisible if the distance are too big
-                        let opacityValue = 1 - (distance / 10000);
+                        let opacityValue = 1 - (distance / 1500);
                         ctx.strokeStyle = `rgba(140, 85, 31, ${opacityValue})`;
                         ctx.lineWidth = 1;
                         ctx.beginPath();
