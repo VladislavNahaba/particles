@@ -33,7 +33,7 @@ class MouseHandler {
         this.y = val;
     }
 
-    updateCnv(cnvWidth, cnvHeight) {
+    updateRadius(cnvWidth, cnvHeight) {
         this.radius = (cnvWidth / 80) * (cnvHeight / 80);
     }
 
@@ -64,12 +64,12 @@ class Particle {
     }
 
     // check particle position, check mouse position, move the particle
-    update(cnvWidth,  cnvHeight, mouse) {
+    update(cnvWidth, cnvHeight, mouse) {
         // check if particle is still within canvas
-        if (this.x > canvas.width || this.x <= 0) {
+        if (this.x > cnvWidth || this.x <= 0) {
             this.directionX = -this.directionX;
         }
-        if (this.y > canvas.height || this.y <= 0) {
+        if (this.y > cnvHeight || this.y <= 0) {
             this.directionY = -this.directionY;
         }
         // check collision - mouse, particle
@@ -129,11 +129,13 @@ class ParticlesLayout {
             speed: 3,
             numberMultiplier: 1,
             size: 5,
+            connect: true,
             connectColor: {
                 r: 140,
                 g: 85,
                 b: 31
             },
+            connectLengthMultiplier: 10,
             connectOpacityMultiplier: 3
         }
     ) {
@@ -150,30 +152,52 @@ class ParticlesLayout {
             speed: 3,
             numberMultiplier: 1,
             size: 5,
+            connect: true,
             connectColor: {
                 r: 140,
                 g: 85,
                 b: 31
             },
+            connectLengthMultiplier: 10,
             connectOpacityMultiplier: 3,
             ...particles
         };
 
+        // before init
+        this.#beforeInit();
+
         this.particlesArray = [];
-        this.cnv = document.querySelector('#canvas');
-        this.cnv.width = window.innerWidth;
-        this.cnv.height = window.innerHeight;
         this.mouse = new MouseHandler(this.cnv.width, this.cnv.height, this.layoutSettings.mouseRadiusMultiplier);
         this.drawer = new Drawer(this.cnv);
 
         // initialize canvas
-        this.init();
+        this.#init();
 
         // set listeners after init
-        this.#innerWork();
+        this.#afterInit();
     }
 
-    #innerWork() {
+    #beforeInit() {
+        this.#appendCanvas();
+    }
+
+    #appendCanvas() {
+        const selector = document.querySelector(this.selector);
+        const element = document.createElement('canvas');
+        element.className = 'canvas-particle-layout';
+        element.width = window.innerWidth;
+        element.height = window.innerHeight;
+        element.style.setProperty('position', 'absolute');
+        element.style.setProperty('top', 0);
+        element.style.setProperty('left', 0);
+        element.style.setProperty('width', '100%');
+        element.style.setProperty('height', '100%');
+        element.style.setProperty('background', this.layoutSettings.color);
+        selector.appendChild(element);
+        this.cnv = element;
+    }
+
+    #afterInit() {
         this.#resizeCanvas();
         this.#mouseOut();
     }
@@ -183,7 +207,7 @@ class ParticlesLayout {
         window.addEventListener('resize', () => {
             this.cnv.width = window.innerWidth;
             this.cnv.height = window.innerHeight;
-            this.mouse.updateCnv(this.cnv.width, this.cnv.height);
+            this.mouse.updateRadius(this.cnv.width, this.cnv.height);
         })
     }
 
@@ -196,7 +220,7 @@ class ParticlesLayout {
     }
 
     // set array of particles
-    createParticles() {
+    #createParticles() {
         let numberOfParticles = (this.cnv.height * this.cnv.width) / 10000;
         for (let i = 0; i < numberOfParticles * this.particlesSettings.numberMultiplier; i++) {
             let size = (Math.random() * this.particlesSettings.size) + 1;
@@ -210,9 +234,9 @@ class ParticlesLayout {
         }
     }
 
-    animate() {
+    #animate() {
         // animate every particle
-        requestAnimationFrame(this.animate.bind(this));
+        requestAnimationFrame(this.#animate.bind(this));
         this.drawer.draw(ctx => ctx.clearRect(0, 0, window.innerWidth, window.innerHeight));
 
         // redraw
@@ -221,11 +245,13 @@ class ParticlesLayout {
             this.drawer.draw(this.particlesArray[i].draw());
         }
 
-        this.connect();
+        if (this.particlesSettings.connect) {
+            this.#connect();
+        }
     }
 
     // check if particles are close enough to draw line between them
-    connect() {
+    #connect() {
         for (let a = 0; a < this.particlesArray.length; a++) {
             for (let b = a ; b < this.particlesArray.length; b++) {
                 let distance = (( this.particlesArray[a].x - this.particlesArray[b].x ) * 
@@ -234,7 +260,13 @@ class ParticlesLayout {
                     (( this.particlesArray[a].y - this.particlesArray[b].y ) * 
                     (this.particlesArray[a].y - this.particlesArray[b].y));
 
-                if (distance < (this.cnv.width / 20) * (this.cnv.height / 20)) {
+                if (
+                    distance < (
+                        this.cnv.width /
+                        (200 * (1 / this.particlesSettings.connectLengthMultiplier))) *
+                        (this.cnv.height /
+                        (200 * (1 / this.particlesSettings.connectLengthMultiplier)))
+                    ) {
                     this.drawer.draw(ctx => {
                         // make particles innvisible if the distance are too big
                         let opacityValue = 1 - (distance / (this.particlesSettings.connectOpacityMultiplier * 500));
@@ -250,9 +282,9 @@ class ParticlesLayout {
         }
     }
 
-    init() {
-        this.createParticles();
-        this.animate();
+    #init() {
+        this.#createParticles();
+        this.#animate();
     }
 }
 const layout = new ParticlesLayout();
