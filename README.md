@@ -39,6 +39,21 @@ Chose selector to append canvas element.
 `connectOpacityMultiplier` - connection opacity to make dissapear animation   
 **default** - 3.  
 
+# Example
+```javascript
+const layout = new ParticlesLayout('body', {
+    mouseRadiusMultiplier: 1
+}, {
+    speed: 5,
+    connectOpacityMultiplier: 5,
+    connectColor: {
+        r: 135,
+        g: 99,
+        b: 42
+    }
+});
+```
+
 # Demo View
 ![](https://i.ibb.co/GvTg3F1/ezgif-6-97872d91ccbb.gif)
 

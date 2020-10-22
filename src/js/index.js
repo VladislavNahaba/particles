@@ -292,5 +292,10 @@ const layout = new ParticlesLayout('body', {
     mouseRadiusMultiplier: 1
 }, {
     speed: 5,
-    connectOpacityMultiplier: 5
+    connectOpacityMultiplier: 5,
+    connectColor: {
+        r: 135,
+        g: 99,
+        b: 42
+    }
 });
