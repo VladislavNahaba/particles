@@ -231,7 +231,7 @@ class ParticlesLayout {
             let directionY = ((Math.random() * this.particlesSettings.speed) - this.particlesSettings.speed / 3) * (1 / (size / 2));
             let color = this.particlesSettings.color;
 
-            this.particlesArray.push(Particle.create(x, y, directionX, directionY, size, color, this.mouse));
+            this.particlesArray.push(Particle.create(x, y, directionX, directionY, size, color));
         }
     }
 
